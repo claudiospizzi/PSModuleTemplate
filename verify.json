@@ -3,6 +3,7 @@
         "Name": "MyProject",
         "Path": "C:\\Workspace\\MyProject",
         "License": "MIT",
-        "Build": "AppVeyor"
+        "Repository": "GitHub",
+        "BuildSystem": "AppVeyor"
     }
 ]
