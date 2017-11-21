@@ -1,0 +1,39 @@
+stages:
+  - init
+  - build
+  - test
+  - deploy
+
+init:
+  stage: init
+  tags:
+    - powershell
+  script:
+    - Install-PackageProvider NuGet -Force | Out-Null
+    - Install-Module psake -Force
+    - Install-Module Pester -Force
+    - Install-Module PSScriptAnalyzer -Force
+
+build:
+  stage: build
+  tags:
+    - powershell
+  script:
+    - Invoke-psake build.psake.ps1 -taskList Build -notr
+
+test:
+  stage: test
+  tags:
+    - powershell
+  script:
+    - Invoke-psake build.psake.ps1 -taskList Test -notr
+
+deploy:
+  stage: deploy
+  when: manual
+  tags:
+    - powershell
+  only:
+    - tags
+  script:
+    - Invoke-psake build.psake.ps1 -taskList Build, DeployGallery -notr
