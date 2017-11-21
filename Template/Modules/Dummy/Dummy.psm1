@@ -13,5 +13,4 @@ Split-Path -Path $PSCommandPath |
             ForEach-Object { . $_.FullName }
 
 <# -------------------------------------------------------------------------- #>
-
 <# SCRIPT #>
