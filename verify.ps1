@@ -41,7 +41,7 @@ Describe 'PowerShell Modules' {
         $repoBuildSystem = $repo.BuildSystem
 
         $moduleNames = Join-Path -Path $repoPath -ChildPath 'Modules' | Get-ChildItem -ErrorAction SilentlyContinue | Select-Object -ExpandProperty 'BaseName'
-        $sourceNames = Join-Path -Path $repoPath -ChildPath 'Sources1' | Get-ChildItem -ErrorAction SilentlyContinue | Select-Object -ExpandProperty 'BaseName'
+        $sourceNames = Join-Path -Path $repoPath -ChildPath 'Sources' | Get-ChildItem -ErrorAction SilentlyContinue | Select-Object -ExpandProperty 'BaseName'
 
         if ($repoName -like $Name)
         {
@@ -248,6 +248,17 @@ Describe 'PowerShell Modules' {
                 {
                     Context "Source $sourceName" {
 
+                        It "should have a valid /Sources/$sourceName/$sourceName.sln" {
+
+                            # Arrange
+                            $filePath = Join-Path -Path $repoPath -ChildPath "Sources/$sourceName/$sourceName.sln"
+
+                            # Act
+                            $fileExist   = Test-Path -Path $filePath
+
+                            # Assert
+                            $fileExist | Should -Be $true
+                        }
                     }
                 }
             }
