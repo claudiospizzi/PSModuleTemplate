@@ -101,6 +101,20 @@ Describe 'PowerShell Modules' {
                     }
                 }
 
+                It 'should have a valid /build.debug.ps1' {
+
+                    # Arrange
+                    $filePath = Join-Path -Path $repoPath -ChildPath 'build.debug.ps1'
+
+                    # Act
+                    $fileExist   = Test-Path -Path $filePath
+                    $fileContent = Get-TemplateContent -Path "$templatePath\build.debug.ps1" -RepoName $repoName
+
+                    # Assert
+                    $fileExist | Should -Be $true
+                    $filePath  | Should -FileContentMatchMultiline $fileContent
+                }
+
                 It 'should have a valid /build.psake.ps1' {
 
                     # Arrange
@@ -178,7 +192,18 @@ Describe 'PowerShell Modules' {
 
                 Context 'Visual Studio Code' {
 
-                    It 'should have a valid /.vscode/launch.json' -Pending {
+                    It 'should have a valid /.vscode/launch.json' {
+
+                        # Arrange
+                        $filePath = Join-Path -Path $repoPath -ChildPath '.vscode\launch.json'
+
+                        # Act
+                        $fileExist   = Test-Path -Path $filePath
+                        $fileContent = Get-TemplateContent -Path "$templatePath\.vscode\launch.json" -RepoName $repoName
+
+                        # Assert
+                        $fileExist | Should -Be $true
+                        $filePath  | Should -FileContentMatchMultiline $fileContent
                     }
 
                     It 'should have a valid /.vscode/settings.json' {
