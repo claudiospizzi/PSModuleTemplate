@@ -11,7 +11,9 @@ init:
   script:
     - Install-PackageProvider NuGet -Force | Out-Null
     - Install-Module psake -Force
+    - Install-Module SecurityFever -Force
     - Install-Module Pester -Force
+    - Install-Module posh-git -Force
     - Install-Module PSScriptAnalyzer -Force
 
 build:
@@ -36,4 +38,4 @@ deploy:
   only:
     - tags
   script:
-    - Invoke-psake build.psake.ps1 -taskList Build, DeployGallery -notr
+    - Invoke-psake build.psake.ps1 -taskList Build, Gallery -notr
