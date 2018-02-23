@@ -401,16 +401,19 @@ function Test-GitRepo
 {
     $gitStatus = Get-GitStatus
 
-    if ($gitStatus.Branch -ne 'master')
+    if ($gitStatus.Branch -ne 'master' -and $gitStatus.Branch -notlike '(*.*.*)')
     {
         throw "Git Exception: $($gitStatus.Branch) is checked out, switch to master branch!"
     }
 
-    $mergeStatus = Get-GitMergeStatus -Branch 'master'
-
-    if ($mergeStatus -notcontains 'dev')
+    if ($gitStatus.Branch -eq 'master')
     {
-        throw "Git Exception: dev branch is not merged into the master branch!"
+        $mergeStatus = Get-GitMergeStatus -Branch 'master'
+
+        if ($mergeStatus -notcontains 'dev')
+        {
+            throw "Git Exception: dev branch is not merged into the master branch!"
+        }
     }
 
     if ($gitStatus.AheadBy -ne 0)
