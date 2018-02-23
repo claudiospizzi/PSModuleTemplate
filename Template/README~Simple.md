@@ -26,8 +26,3 @@
 ## Requirements
 
 <# PLACEHOLDER #>
-
-
-## Contribute
-
-<# PLACEHOLDER #>
