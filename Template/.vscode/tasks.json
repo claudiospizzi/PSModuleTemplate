@@ -15,7 +15,7 @@
         "presentation": {
             "echo": false,
             "reveal": "always",
-            "focus": false,
+            "focus": true,
             "panel": "new"
         }
     },
