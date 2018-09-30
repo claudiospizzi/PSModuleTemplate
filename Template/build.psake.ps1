@@ -156,7 +156,7 @@ Task Verify -requiredVariables VerifyBuildSystem {
             $actual   = Get-Content -Path "$PSScriptRoot\$file"
 
             # Compare objects
-            Assert -conditionToCheck ($null -ne (Compare-Object -ReferenceObject $expected -DifferenceObject $actual)) -failureMessage "The file '$file' is not current. Please update the file and restart the build."
+            Assert -conditionToCheck ($null -eq (Compare-Object -ReferenceObject $expected -DifferenceObject $actual)) -failureMessage "The file '$file' is not current. Please update the file and restart the build."
         }
     }
     else
