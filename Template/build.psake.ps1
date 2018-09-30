@@ -146,12 +146,12 @@ Task Verify {
         # Download reference file
         Invoke-WebRequest -Uri "https://raw.githubusercontent.com/claudiospizzi/PSModuleTemplate/master/Template/$file" -OutFile "$Env:Temp\$file"
 
-        # Calculate hashes
-        $expected = Get-FileHash -Path "$Env:temp\$file"
-        $actual   = Get-FileHash -Path "$PSScriptRoot\$file"
+        # Get content (don't compare hashes, because of new line chars)
+        $expected = Get-Content -Path "$Env:Temp\$file"
+        $actual   = Get-Content -Path "$PSScriptRoot\$file"
 
-        # Compare hashes
-        if ($expected.Hash -ne $actual.Hash)
+        # Compare objects
+        if ($null -ne (Compare-Object -ReferenceObject $expected -DifferenceObject $actual))
         {
             throw "The file '$file' is not current. Please update the file and restart the build."
         }
