@@ -1,59 +1,87 @@
 <#
     .SYNOPSIS
-    PSake build script for PowerShell modules.
+        PowerShell module build script based on psake.
 
     .DESCRIPTION
-    This PSake build script supports building PowerShell manifest modules which
-    contain PowerShell script functions and optionally binary C# libraries.
+        This psake build script supports building PowerShell manifest modules
+        which contain PowerShell script functions and optionally binary .NET C#
+        libraries. The build script contains the following tasks.
 
-    The build script contains the following tasks:
-    - Init
-      Create folders, which are used by the build system: tst/ and bin/.
-    - Clean
-      Clean the content of build paths to ensure no side effects.
-    - Compile
-      If required, compile the Visual Studio Solutions. Ensure that the build
-      system copies the result into the target Module folder.
-    - Stage
-      Copy all module files to the build directory excluding the Functions and
-      Helpers, these files get merged in the .psm1 file.
-    - Merge
-      Copy the content of all .ps1 files within the Functions and Helpers
-      folders to the .psm1 file. This ensures a faster loading time for the
-      module, but still a nice development experience with one function per
-      file.
-    - Pester
-      Invoke all Pester tests within the module and ensure that all tests pass.
-    - ScriptAnalyzer
-      Invoke all Script Analyzer rules against the PowerShell script files and
-      ensure, that they do not break any rule.
-    - Gallery
-      This task will publish the module to a PowerShell Gallery. The task is not
-      part of the default tasks, it needs to be called manually if needed during
-      a deployment.
-    - GitHub
-      This task will publish the module to the GitHub Releases. The task is not
-      part of the default tasks, it needs to be called manually if needed during
-      a deployment.
+        - Task Verify
+          Before any build task runs, verify that the build scripts are current.
 
-    The tasks are grouped to the following task groups. The deploy task is not
-    part of the default tasks.
-    - Default
-      Tasks: Build, Test
-    - Build
-      Tasks: Init, Clean, Compile, Stage, Merge
-    - Test
-      Tasks: Pester, ScriptAnalyzer
-    - Deploy
-      Tasks: Gallery, GitHub
+        - Task Init
+          Create folders, which are used by the build system: /tst and /bin.
+
+        - Task Clean
+          Cleans the content of build paths to ensure no side effects of
+          previous build with the current build.
+
+        - Task Compile
+          If required, compile the Visual Studio solutions. Ensure that the
+          build system copies the result into the target module folder.
+
+        - Task Stage
+          Copy all module files to the build directory excluding the class,
+          function, helper and test files. These files get merged in the .psm1
+          file.
+
+        - Task Merge
+          Copy the content of all .ps1 files within the classes, functions and
+          helpers folders to the .psm1 file. This ensures a faster loading time
+          for the module, but still a nice development experience with one
+          function per file. This is optional and can be controlled by the
+          setting $ModuleMerge.
+
+        - Task Pester
+          Invoke all Pester tests within the module and ensure that all tests
+          pass before the build script continues.
+
+        - Task ScriptAnalyzer
+          Invoke all Script Analyzer rules against the PowerShell script files
+          and ensure, that they do not break any rule.
+
+        - Task Gallery
+          This task will publish the module to a PowerShell Gallery. The task is
+          not part of the default tasks, it needs to be called manually if
+          needed during a deployment.
+
+        - Task GitHub
+          This task will publish the module to the GitHub Releases. The task is
+          not part of the default tasks, it needs to be called manually if
+          needed during a deployment.
+
+        The tasks are grouped to the following task groups. The deploy task is
+        not part of the default tasks, this must be invoked manually.
+
+        - Group Default
+          Task to group the other groups Build and Test. This will be invoked by
+          default, if Invoke-psake is invoked.
+
+        - Group Build
+          The build task group will invoke the tasks Init, Clean, Compile, Stage
+          and Merge. The output is stored in /bin.
+
+        - Group Test
+          All tasks to verify the integrity of the module with the tasks Pester
+          and ScriptAnalyzer.
+
+        - Group Deploy
+          Tasks to deploy the module to the PowerShell Gallery and/or GitHub.
 
     .NOTES
-    Author     : Claudio Spizzi
-    License    : MIT License
+        Author     : Claudio Spizzi
+        License    : MIT License
 
     .LINK
-    https://github.com/claudiospizzi
+        https://github.com/claudiospizzi
 #>
+
+
+# Suppress some rules for this build file
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingCmdletAliases', '')]
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', '')]
+param ()
 
 
 ## Configuration and Default task
@@ -61,31 +89,39 @@
 # Default build configuration
 Properties {
 
-    $ModulePath  = Join-Path -Path $PSScriptRoot -ChildPath 'Modules'
-    $ModuleNames = ''
+    # Module configuration: Location and option to enable the merge
+    $ModulePath          = Join-Path -Path $PSScriptRoot -ChildPath 'Modules'
+    $ModuleNames         = ''
+    $ModuleMerge         = $false
 
-    $SourcePath    = Join-Path -Path $PSScriptRoot -ChildPath 'Sources'
-    $SourceNames   = ''
-    $SourcePublish = ''
+    # Source configuration: Visual Studio projects to compile
+    $SourcePath          = Join-Path -Path $PSScriptRoot -ChildPath 'Sources'
+    $SourceNames         = ''
+    $SourcePublish       = ''
 
-    $ReleasePath = Join-Path -Path $PSScriptRoot -ChildPath 'bin'
+    # Path were the release files are stored
+    $ReleasePath         = Join-Path -Path $PSScriptRoot -ChildPath 'bin'
 
-    $PesterPath = Join-Path -Path $PSScriptRoot -ChildPath 'tst'
-    $PesterFile = 'pester.xml'
+    # Configure the Pester test execution
+    $PesterPath          = Join-Path -Path $PSScriptRoot -ChildPath 'tst'
+    $PesterFile          = 'pester.xml'
 
+    # Configure the Script Analyzer rules
     $ScriptAnalyzerPath  = Join-Path -Path $PSScriptRoot -ChildPath 'tst'
     $ScriptAnalyzerFile  = 'scriptanalyzer.json'
     $ScriptAnalyzerRules = Get-ScriptAnalyzerRule
 
-    $GalleryEnabled = $false
-    $GalleryName    = 'PSGallery'
-    $GallerySource  = 'https://www.powershellgallery.com/api/v2/'
-    $GalleryPublish = 'https://www.powershellgallery.com/api/v2/package/'
-    $GalleryKey     = ''
+    # Define if the module is published to the PowerShell Gallery
+    $GalleryEnabled      = $false
+    $GalleryName         = 'PSGallery'
+    $GallerySource       = 'https://www.powershellgallery.com/api/v2/'
+    $GalleryPublish      = 'https://www.powershellgallery.com/api/v2/package/'
+    $GalleryKey          = ''
 
-    $GitHubEnabled  = $false
-    $GitHubRepoName = ''
-    $GitHubToken    = ''
+    # Define if the module is published to the GitHub Releases section
+    $GitHubEnabled       = $false
+    $GitHubRepoName      = ''
+    $GitHubToken         = ''
 }
 
 # Load project configuration
@@ -98,7 +134,29 @@ Task Default -depends Build, Test
 ## Build tasks
 
 # Overall build  task
-Task Build -depends Init, Clean, Compile, Stage, Merge
+Task Build -depends Verify, Init, Clean, Compile, Stage, Merge
+
+# Verify the build system
+Task Verify {
+
+    $files = 'build.psake.ps1'
+
+    foreach ($file in $files)
+    {
+        # Download reference file
+        Invoke-WebRequest -Uri "https://raw.githubusercontent.com/claudiospizzi/PSModuleTemplate/master/Template/$file" -OutFile "$Env:Temp\$file"
+
+        # Calculate hashes
+        $expected = Get-FileHash -Path "$Env:temp\$file"
+        $actual   = Get-FileHash -Path "$PSScriptRoot\$file"
+
+        # Compare hashes
+        if ($expected.Hash -ne $actual.Hash)
+        {
+            throw "The file '$file' is not current. Please update the file and restart the build."
+        }
+    }
+}
 
 # Create release and test folders
 Task Init -requiredVariables ReleasePath, PesterPath, ScriptAnalyzerPath {
@@ -301,7 +359,7 @@ Task ScriptAnalyzer -requiredVariables ReleasePath, ModulePath, ModuleNames, Scr
 
         Show-ScriptAnalyzerResult -ModuleName $moduleName -Rule $ScriptAnalyzerRules -Result $analyzeResults
 
-        Assert -conditionToCheck ($analyzeResults.Count -eq 0) -failureMessage "One or more Script Analyzer tests failed, build cannot continue."
+        Assert -conditionToCheck ($analyzeResults.Where({$_.Severity -ne 0}).Count -eq 0) -failureMessage "One or more Script Analyzer tests failed, build cannot continue."
     }
 }
 
@@ -364,6 +422,12 @@ Task GitHub -requiredVariables ReleasePath, ModuleNames, GitHubEnabled, GitHubRe
     {
         $moduleVersion = (Import-PowerShellDataFile -Path "$ReleasePath\$moduleName\$moduleName.psd1").ModuleVersion
         $releaseNotes  = Get-ReleaseNote -Version $moduleVersion
+
+        # Add TLS 1.2 for GitHub
+        if (([Net.ServicePointManager]::SecurityProtocol -band [Net.SecurityProtocolType]::Tls12) -ne [Net.SecurityProtocolType]::Tls12)
+        {
+            [Net.ServicePointManager]::SecurityProtocol += [Net.SecurityProtocolType]::Tls12
+        }
 
         # Create GitHub release
         $releaseParams = @{
@@ -447,7 +511,7 @@ function Show-ScriptAnalyzerResult($ModuleName, $Rule, $Result)
     $colorMap = @{
         Error       = 'Red'
         Warning     = 'Yellow'
-        Information = 'Blue'
+        Information = 'Cyan'
     }
 
     Write-Host "`nModule $ModuleName" -ForegroundColor Green
@@ -473,7 +537,7 @@ function Show-ScriptAnalyzerResult($ModuleName, $Rule, $Result)
     }
 
     Write-Host "`nScript Analyzer completed"
-    Write-Host "Rules: $($Rule.Count) Failed: $($analyzeResults.Count)"
+    Write-Host "Rules: $($Rule.Count) Findings: $($analyzeResults.Count)"
 }
 
 # Extract the Release Notes from the CHANGELOG.md file
