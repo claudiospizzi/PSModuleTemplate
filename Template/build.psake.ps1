@@ -250,6 +250,8 @@ Task Stage -depends Compile -requiredVariables ReleasePath, ModulePath, ModuleNa
     {
         foreach ($moduleName in $ModuleNames)
         {
+            New-Item -Path "$ReleasePath\$moduleName" -ItemType 'Directory' | Out-Null
+
             if ($ModuleMerge)
             {
                 $excludePath = 'Classes', 'Functions', 'Helpers', 'Tests'
