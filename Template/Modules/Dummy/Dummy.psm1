@@ -10,12 +10,6 @@
 
 ## Module loader
 
-# Get and dot source all classes (internal)
-Split-Path -Path $PSCommandPath |
-    Get-ChildItem -Filter 'Classes' -Directory |
-        Get-ChildItem -Include '*.ps1' -File -Recurse |
-            ForEach-Object { . $_.FullName }
-
 # Get and dot source all helper functions (internal)
 Split-Path -Path $PSCommandPath |
     Get-ChildItem -Filter 'Helpers' -Directory |
@@ -32,4 +26,4 @@ Split-Path -Path $PSCommandPath |
 ## Module configuration
 
 # Module path
-New-Variable -Name 'ModulePath' -Value $PSScriptRoot
+New-Variable -Name 'PSModulePath' -Value $PSScriptRoot
