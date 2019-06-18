@@ -7,8 +7,17 @@
         module context.
 #>
 
+#region Namepsace Loader
 
-## Module loader
+#endregion Namepsace Loader
+
+#region Module Loader
+
+# Get and dot source all classes (internal)
+Split-Path -Path $PSCommandPath |
+    Get-ChildItem -Filter 'Classes' -Directory |
+        Get-ChildItem -Include '*.ps1' -File -Recurse |
+            ForEach-Object { . $_.FullName }
 
 # Get and dot source all helper functions (internal)
 Split-Path -Path $PSCommandPath |
@@ -22,8 +31,8 @@ Split-Path -Path $PSCommandPath |
         Get-ChildItem -Include '*.ps1' -File -Recurse |
             ForEach-Object { . $_.FullName }
 
+#endregion Module Loader
 
-## Module configuration
+#region Module Configuration
 
-# Module path
-New-Variable -Name 'PSModulePath' -Value $PSScriptRoot
+#endregion Module Configuration
